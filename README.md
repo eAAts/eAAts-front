@@ -2,8 +2,9 @@
 
 |Name|Version|
 |------|---|
-|node|v19.6.0|
+|node|v18.16.0|
 |react|18.2.0|
+|react-scripts|5.0.1|
 
 ``` shell
 # local set-up
