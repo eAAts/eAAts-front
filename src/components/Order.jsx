@@ -5,12 +5,28 @@ import {
   Text,
 } from '@chakra-ui/react';
 import { CHAIN_NAMESPACES } from '@web3auth/base'
+import { OpenloginAdapter } from "@web3auth/openlogin-adapter";
 
 import { ColorModeSwitcher } from '../ColorModeSwitcher';
 import { OrderCardList } from './OrderCardList';
 import { Web3AuthModalPack } from '@safe-global/auth-kit';
 
-const web3AuthOptions = {
+const adapterSettings = {
+  uxMode: "popup",
+  whiteLabel: {
+    appName: "eAAts",
+    appUrl: "https://web3auth.io",
+    logoLight: "https://web3auth.io/images/w3a-L-Favicon-1.svg",
+    logoDark: "https://web3auth.io/images/w3a-D-Favicon-1.svg",
+    defaultLanguage: "ko", // en, de, ja, ko, zh, es, fr, pt, nl
+    mode: "dark", // whether to enable dark mode. defaultValue: auto
+    theme: {
+      primary: "#00D1B2",
+    },
+    useLogoLoader: true,
+  }
+}
+const options = {
   clientId: '123',
   web3AuthNetwork: 'mainnet',
   chainConfig: {
@@ -37,12 +53,15 @@ export const Order = () => {
   }, [address])
 
   const initWeb3AuthModal = async () => {
-   const web3AuthModalPack = await new Web3AuthModalPack({
+    const openloginAdapter = new OpenloginAdapter({
+      adapterSettings
+    })
+    console.log(openloginAdapter)
+
+   const web3AuthModalPack = new Web3AuthModalPack({
       txServiceUrl: 'https://safe-transaction-mainnet.safe.global'
    })
-    await web3AuthModalPack.init({
-    options: web3AuthOptions
-    })
+    await web3AuthModalPack.init({ options }, [openloginAdapter])
     setWeb3Pack(web3AuthModalPack)
 
     web3AuthModalPack.subscribe("connected", (e) => console.log("connect!", e));
@@ -65,7 +84,7 @@ export const Order = () => {
       const { eoa, safes } = await web3Pack.signIn();
       setAddress(eoa);
       const userInfo = await web3Pack.getUserInfo();
-      const web3Provider = web3Pack.getProvider();
+      const web3Provider = await web3Pack.getProvider();
       console.log(eoa, safes, userInfo, web3Provider);
     } catch (e) {
       console.error("error", e)
