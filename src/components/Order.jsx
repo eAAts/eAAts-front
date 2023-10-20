@@ -15,7 +15,7 @@ import Web3 from 'web3';
 import eAAts from '../eAAts.json'
 import { OrderCheckbox } from './OrderCheckbox';
 import { ethers } from 'ethers';
-import Safe, { EthersAdapter, SafeFactory } from '@safe-global/protocol-kit';
+import Safe, { EthersAdapter, SafeFactory, getSafeContract } from '@safe-global/protocol-kit';
 import { OpenloginAdapter } from '@web3auth/openlogin-adapter';
 import { EthereumPrivateKeyProvider } from '@web3auth/ethereum-provider';
 import { GelatoRelayPack } from '@safe-global/relay-kit';
@@ -24,12 +24,12 @@ import SafeApiKit from '@safe-global/api-kit';
 
 const options = {
   clientId: 'BL7DvTW5eDnbbseTHotSiB8fFhueObVhMknseYNi4ICU8am0tB_6FWF-KU3i3gNjM5_IWs-mSNvBQEYSFTVB3AU',
-  web3AuthNetwork: "cyan",
+  web3AuthNetwork: "sapphire_mainnet",
   chainConfig: {
     chainNamespace: CHAIN_NAMESPACES.EIP155,
-    chainId: "0x5",
-    blockExplorer: "https://goerli.etherscan.io",
-    rpcTarget: "https://eth-goerli.public.blastapi.io",
+    chainId: "0x89",
+    blockExplorer: "https://polygonscan.com",
+    rpcTarget: "https://polygon.llamarpc.com",
   },
    uiConfig: {
     theme: 'dark',
@@ -63,9 +63,9 @@ export const Order = () => {
     try {
         const config = {
           chainNamespace: CHAIN_NAMESPACES.EIP155,
-          chainId: "0x5",
-          blockExplorer: "https://goerli.etherscan.io",
-          rpcTarget: "https://eth-goerli.public.blastapi.io",
+          chainId: "0x89",
+          blockExplorer: "https://polygonscan.com/",
+          rpcTarget: "https://polygon.llamarpc.com",
         };
       const privateKeyProvider = new EthereumPrivateKeyProvider({
         config: { chainConfig: config }
@@ -82,7 +82,7 @@ export const Order = () => {
       })
       // 인스턴스 생성
       const web3AuthConfig = {
-        txServiceUrl: 'https://safe-transaction-goerli.safe.global' // safe 관련
+        txServiceUrl: 'https://safe-transaction-polygon.safe.global' // safe 관련
       }
       const web3AuthModalPack = new Web3AuthModalPack(web3AuthConfig)
 
@@ -231,20 +231,20 @@ export const Order = () => {
       // * Signing transaction https://docs.safe.global/safe-core-aa-sdk/auth-kit/web3auth#signing-transactions-using-the-web3authmodalpack-and-protocol-kit
       const safeSDK = await Safe.create({
         ethAdapter,
-        safeAddress : "0x2E5f05e205E66aC258B0f10CBa6E386395d0c29f", // safeAddress?
+        safeAddress : "0x4BD1f0331D7D3B928EB009aF9134888784f14218", // safeAddress?
       })
 
       // const safeTransactionData = {
-      //   to: "0xF656b0BEfAa46e15625E3CCeeC91F9919f035b69",
+      //   to: "0x98f2738Cf1784471554aDf2D850131Eb0f415b53",
       //   data: '0x',
       //   value: ethers.utils.parseUnits("0.000001", 'ether').toString()
       // }
       // const safeTransaction = await safeSDK.createTransaction({ safeTransactionData })
 
       // * protocol kit https://docs.safe.global/safe-core-aa-sdk/protocol-kit
-      const txServiceUrl = 'https://safe-transaction-goerli.safe.global';
-      const safeService = new SafeApiKit({ txServiceUrl, ethAdapter });
-      console.log(safeService, 1121);
+      // const txServiceUrl = 'https://safe-transaction-polygon.safe.global';
+      // const safeService = new SafeApiKit({ txServiceUrl, ethAdapter });
+      // console.log(safeService, 1121);
 
       // const safeFactory = await SafeFactory.create({ ethAdapter });
       // console.log(safeFactory, 23, await signer.getAddress())
@@ -257,7 +257,7 @@ export const Order = () => {
       // console.log(233, safeSdkOwner1);
       
       // * send to AA Ether https://docs.safe.global/safe-core-aa-sdk/protocol-kit#send-eth-to-the-safe
-      // const safeAddress = "0x2E5f05e205E66aC258B0f10CBa6E386395d0c29f"
+      // const safeAddress = "0x4BD1f0331D7D3B928EB009aF9134888784f14218"
       // const safeAmount = ethers.utils.parseUnits('0.00001', 'ether').toHexString();
       // const transactionParameters = {
       //   to: safeAddress,
@@ -270,7 +270,7 @@ export const Order = () => {
       // * create Tx https://docs.safe.global/safe-core-aa-sdk/protocol-kit#create-a-transaction
       // const amount = ethers.utils.parseUnits('0.00001', 'ether').toString();
       // const safeTransactionData = {
-      //   to: "0xF656b0BEfAa46e15625E3CCeeC91F9919f035b69", // await signer.getAddress(),
+      //   to: "0x98f2738Cf1784471554aDf2D850131Eb0f415b53", // await signer.getAddress(),
       //   data: "0x",
       //   value: amount,
       // };
@@ -283,15 +283,15 @@ export const Order = () => {
       // console.log(safeTxHash, senderSignature, 8989)
 
       // await safeService.proposeTransaction({
-      //   safeAddress: "0x2E5f05e205E66aC258B0f10CBa6E386395d0c29f",
+      //   safeAddress: "0x4BD1f0331D7D3B928EB009aF9134888784f14218",
       //   safeTransactionData: safeTransaction.data,
       //   safeTxHash,
-      //   senderAddress: "0xF656b0BEfAa46e15625E3CCeeC91F9919f035b69", // await signer.getAddress(),
+      //   senderAddress: "0x98f2738Cf1784471554aDf2D850131Eb0f415b53", // await signer.getAddress(),
       //   senderSignature: senderSignature.data,
       // });
     
       // * pending Tx https://docs.safe.global/safe-core-aa-sdk/protocol-kit#get-pending-transactions
-      // const pendingTransactions = await safeService.getPendingTransactions("0x2E5f05e205E66aC258B0f10CBa6E386395d0c29f").results;
+      // const pendingTransactions = await safeService.getPendingTransactions("0x4BD1f0331D7D3B928EB009aF9134888784f14218").results;
       // console.log(pendingTransactions, 2333);
 
       // * execute https://docs.safe.global/safe-core-aa-sdk/protocol-kit#execute-the-transaction
@@ -300,59 +300,36 @@ export const Order = () => {
       // console.log(signature, response, 98888);
 
       // const executeTxResponse = await safeSDK.executeTransaction(safeTransaction)
+      // console.log(executeTxResponse, 25555);
       // const receipt = await executeTxResponse.transactionResponse.wait()
       // console.log(executeTxResponse, receipt, 100399);
 
       // console.log('Transaction executed:')
       // console.log(`https://goerli.etherscan.io/tx/${receipt.transactionHash}`)
 
-
-      // console.log(safeSDK, 33333)
-      // const safeAddress = await safeSDK.getAddress();
-      // console.log(safeAddress, 21111);
-      // const safeFactory = await SafeFactory.create({ ethAdapter });
-      // console.log(safeFactory, 23)
-
-      // const safeAccountConfig = {
-      //   owners: [address],
-      //   threshold: 1
-      // }
-      // const safeSDKOwner1 = await safeFactory.deploySafe({ safeAccountConfig });
-      // const safeAddress2 = await safeSDKOwner1.getAddress();
-      // console.log(safeAddress2, 24000);
-
-      // const transactions = {
-      //   to: "0xF656b0BEfAa46e15625E3CCeeC91F9919f035b69",
+      // * relay kit
+      // const withdrawAmount = ethers.utils.parseUnits('0.00001', 'ether').toString()
+      // const transactions = [{
+      //   to: "0x98f2738Cf1784471554aDf2D850131Eb0f415b53",
       //   data: '0x',
-      //   value: ethers.utils.parseUnits("0.000001", 'ether').toString()
+      //   value: withdrawAmount
+      // }]
+      // const options = {
+      //   isSponsored: true
       // }
-      // const safeTransaction = await safeSDK.createTransaction({ safeTransactionData: transactions })
-      // console.log(safeTransaction, 9999999);
-      // const safeTxHash = await safeSDK.getTransactionHash(safeTransaction)
-      // console.log(23435, safeTxHash)
 
-      const withdrawAmount = ethers.utils.parseUnits('0.00001', 'ether').toString()
-      const transactions = [{
-        to: "0xF656b0BEfAa46e15625E3CCeeC91F9919f035b69",
-        data: '0x',
-        value: withdrawAmount
-      }]
-      const options = {
-        isSponsored: true
-      }
-
-      const relaykit = new GelatoRelayPack("Lq2bZbQ5S9_htliU100OzWyP9x5JrXg68t15pbJoc_U_");
-      console.log(relaykit, 22233242);
+      // const relaykit = new GelatoRelayPack("LCoYNkDxEbhK53I6btEmHf9KLjPsanS3UOsAyKwvaGI_");
+      // console.log(relaykit, 22233242);
       
-      // const relaykit = new GelatoRelayPack();
-      // console.log(relaykit, 34543);
-      const safeTransaction = await relaykit.createRelayedTransaction({ safe: safeSDK, transactions, options });
-      console.log(safeTransaction, 333222)
-      const signedSafeTransaction = await safeSDK.signTransaction(safeTransaction);
-      console.log(signedSafeTransaction, 5555);
+      // // const relaykit = new GelatoRelayPack();
+      // // console.log(relaykit, 34543);
+      // const safeTransaction = await relaykit.createRelayedTransaction({ safe: safeSDK, transactions, options });
+      // console.log(safeTransaction, 333222)
+      // const signedSafeTransaction = await safeSDK.signTransaction(safeTransaction);
+      // console.log(signedSafeTransaction, 5555);
 
-      const response = await relaykit.executeRelayTransaction(signedSafeTransaction, safeSDK, options);
-      console.log(`Relay Transaction Task ID: https://relay.gelato.digital/tasks/status/${response.taskId}`)
+      // const response = await relaykit.executeRelayTransaction(signedSafeTransaction, safeSDK, options);
+      // console.log(`Relay Transaction Task ID: https://relay.gelato.digital/tasks/status/${response.taskId}`)
     } catch (e) {
       console.error("error:signer", e);
     }
