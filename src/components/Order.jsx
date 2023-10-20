@@ -3,7 +3,11 @@ import {
   Box,
   Button,
   Grid,
+  HStack,
+  Stack,
   Text,
+  VStack,
+  useCheckboxGroup,
 } from '@chakra-ui/react';
 import { CHAIN_NAMESPACES, WALLET_ADAPTERS } from '@web3auth/base'
 import { OpenloginAdapter } from "@web3auth/openlogin-adapter";
@@ -13,18 +17,19 @@ import { OrderCardList } from './OrderCard';
 import { Web3AuthModalPack } from '@safe-global/auth-kit';
 import Web3 from 'web3';
 import Gov from '../gov.json'
+import { OrderCheckbox } from './OrderCheckbox';
 
 const options = {
-  clientId: 'BHLkI4wIWb5FCMHxutTB5aZGdxZRhf2BGopRFqf5c2Vb3EabStTZ0MUfcFJ9Le5-mtn9EykqDSxORlc13jUees8',
+  clientId: 'BPi5PB_UiIZ-cPz1GtV5i1I2iOSOHuimiXBI0e-Oe_u6X3oVAbCiAZOTEBtTXw4tsluTITPqA8zMsfxIKMjiqNQ',
   web3AuthNetwork: 'testnet',
   chainConfig: {
     chainNamespace: CHAIN_NAMESPACES.EIP155,
-    chainId: "0x458",
-    displayName: "wemix testnet",
+    chainId: "0x13881",
+    displayName: "Mumbai",
     blockExplorer: "",
-    ticker: "WEMIX",
-    tickerName: "WEMIX",
-    rpcTarget: "https://api.test.wemix.com",
+    ticker: "MATIC",
+    tickerName: "MATIC",
+    rpcTarget: "https://matic-mumbai.chainstacklabs.com",
   },
   uiConfig: {
     theme: 'light',
@@ -176,6 +181,11 @@ export const Order = () => {
           <Text>typeOfLogin: {userInfo.typeOfLogin}</Text>
         </>
       }
+       <HStack spacing="5vh">
+        <OrderCheckbox />
+        <OrderCheckbox />
+        <OrderCheckbox />
+      </HStack>
       <Grid minH="100vh" p={5} px={10}>
         <ColorModeSwitcher justifySelf="flex-end" />
         <OrderCardList />
