@@ -19,10 +19,12 @@ module.exports = function override(config) {
             Buffer: ['buffer', 'Buffer']
         })
     ]);
-    config.module.rules.unshift({
-        test: /\.m?js$/,
+    config.module.rules.push({
+        test: /\.(js|mjs|jsx)$/,
+        enforce: "pre",
+        loader: require.resolve("source-map-loader"),
         resolve: {
-            fullySpecified: false, // disable the behavior
+        fullySpecified: false,
         },
     });
     config.ignoreWarnings = [/Failed to parse source map/];
