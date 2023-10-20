@@ -9,18 +9,17 @@ import {
 } from '@chakra-ui/react';
 import React from 'react';
 
-export const OrderCheckbox = () => {
+export const OrderCheckbox = ({ list }) => {
   const { value, getCheckboxProps } = useCheckboxGroup({
-    defaultValue: ['2'],
+    defaultValue: [],
   })
 
   return (
     <>
-      {/* <Text textAlign="left">The selected checkboxes are: {value.sort().join(' and ')}</Text> */}
+      <Text textAlign="left">The selected checkboxes are: {value.sort()}</Text>
       <Stack direction={['column', 'row']}>
-        <CheckBox {...getCheckboxProps({ value: '1' })}/>
-        <CheckBox {...getCheckboxProps({ value: '2' })}/>
-        <CheckBox {...getCheckboxProps({ value: '3' })}/>
+          {list && list.map((item) =>
+            <CheckBox {...getCheckboxProps({ value: `${item}` })} />)}
       </Stack>
       </>
   )
