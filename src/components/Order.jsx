@@ -5,27 +5,49 @@ import {
   Grid,
   Text,
 } from '@chakra-ui/react';
-import { CHAIN_NAMESPACES } from '@web3auth/base'
+import { CHAIN_NAMESPACES, WALLET_ADAPTERS } from '@web3auth/base'
 import { OpenloginAdapter } from "@web3auth/openlogin-adapter";
 
 import { ColorModeSwitcher } from '../ColorModeSwitcher';
-import { OrderCardList } from './OrderCardList';
+import { OrderCardList } from './OrderCard';
 import { Web3AuthModalPack } from '@safe-global/auth-kit';
+import Web3 from 'web3';
+import Gov from '../gov.json'
 
 const options = {
-  clientId: '12345',
+  clientId: 'BHLkI4wIWb5FCMHxutTB5aZGdxZRhf2BGopRFqf5c2Vb3EabStTZ0MUfcFJ9Le5-mtn9EykqDSxORlc13jUees8',
   web3AuthNetwork: 'testnet',
   chainConfig: {
     chainNamespace: CHAIN_NAMESPACES.EIP155,
-    chainId: '0x458',
-    rpcTarget: 'https://api.test.wemix.com'
+    chainId: "0x458",
+    displayName: "wemix testnet",
+    blockExplorer: "",
+    ticker: "WEMIX",
+    tickerName: "WEMIX",
+    rpcTarget: "https://api.test.wemix.com",
+  },
+  uiConfig: {
+    theme: 'light',
+    loginMethodsOrder: ['facbook', 'google']
+  }
+}
+const modalConfig = {
+  [WALLET_ADAPTERS.TORUS_EVM]: {
+    label: 'torus',
+    showOnModal: false
+  },
+  [WALLET_ADAPTERS.METAMASK]: {
+    label: 'metamask',
+    showOnDesktop: true,
+    showOnMobile: false
   }
 }
 
 export const Order = () => {
   const [web3Pack, setWeb3Pack] = useState(null);
+  const [web3, setWeb3] = useState(null);
   const [address, setAddress] = useState("");
-  const [userInfo, setUserInfo] = useState({});
+  const [userInfo, setUserInfo] = useState(null);
 
   useEffect(() => {
     initWeb3AuthModal();
@@ -39,7 +61,7 @@ export const Order = () => {
           txServiceUrl: 'https://safe-transaction-mainnet.safe.global' // safe 관련
       })
       // 옵션 파람스 https://web3auth.io/docs/sdk/pnp/web/modal/initialize#instantiating-web3auth
-      await web3AuthModalPack.init({ options })
+      await web3AuthModalPack.init({ options }, [], modalConfig);
 
       // 이벤트 구독
       web3AuthModalPack.subscribe("connected", (e) => console.log("connect!", e));
@@ -57,15 +79,15 @@ export const Order = () => {
   const checkLogin = () => {
     const address = window.localStorage.getItem("address")
     const userInfo = window.localStorage.getItem("openlogin_store");
-    if(address === null) return;
-    if(userInfo === null) return;
-
+    if (address === null) return;
+    if (userInfo === null) return;
+    
     setAddress(address);
-    setUserInfo(JSON.parse(userInfo))
+    setUserInfo(Object.keys(JSON.parse(userInfo)).length > 2 ? userInfo : null)
   }
 
   const login = async () => {  
-    if (web3Pack === undefined) {
+    if (web3Pack === null) {
       alert("plz web3AuthModalPack init");
       return;
     }
@@ -79,18 +101,22 @@ export const Order = () => {
       const { eoa, safes } = await web3Pack.signIn();
       // 소셜 로그인 정보
       const userInfo = await web3Pack.getUserInfo();
+      console.log(userInfo)
+      // web3 객체 만들기
       const web3Provider = await web3Pack.getProvider();
+      const web3 = new Web3(web3Provider);
 
       window.localStorage.setItem("address", eoa);
+      setWeb3(web3);
       setAddress(eoa);
-      setUserInfo(userInfo)
+      setUserInfo(Object.keys(userInfo).length ? userInfo : null)
     } catch (e) {
       console.error("login:error", e)
     }
   }
 
   const logout = async () => {
-    if (web3Pack === undefined) {
+    if (web3Pack === null) {
       alert("plz web3AuthModalPack init");
       return;
     }
@@ -105,14 +131,36 @@ export const Order = () => {
 
      window.localStorage.removeItem("address");
      setAddress("");
-     setUserInfo({});
+     setUserInfo(null);
     } catch (e) {
       console.error("logout:error", e);
     }
   }
 
-  const sendTransaction = () => {
-
+  const sendTransaction = async () => {
+    if (web3 === null) {
+      alert("Failed :(");
+      return;
+    }
+    try {
+      // contract 객체 만들기
+      const contract = new web3.eth.Contract(Gov.abi, "0xa98C15B5D0d4F12A7b4C12bb8FA216f446D6534D")
+      // sign
+      await web3.eth.personal.sign("1234", address)
+      // send transaction
+      const encodeABI = contract.methods.finalizeEndedVote().encodeABI();
+      web3.eth.sendTransaction({
+        from: address,
+        to: "0xa98C15B5D0d4F12A7b4C12bb8FA216f446D6534D",
+        data: encodeABI,
+        gasPrice: 101000000000,
+        value: "0x0",
+      }, (err, hash) => {
+        console.log(err, hash)
+      })
+    } catch (e) {
+      console.error("sendTransaction:error", e);
+    }
   }
 
   return (
@@ -121,7 +169,7 @@ export const Order = () => {
       <Button onClick={() => logout()}>logout</Button>
       <Button onClick={() => sendTransaction()}>sendTransaction</Button>
       <Text>address: {address}</Text>
-      {Object.keys(userInfo).length > 0 &&
+      {userInfo !== null &&
         <>
           <Text>email: {userInfo.email}</Text>
           <Text>name: {userInfo.name}</Text>
