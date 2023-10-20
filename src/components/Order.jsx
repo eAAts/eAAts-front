@@ -22,15 +22,16 @@ import { GelatoRelayPack } from '@safe-global/relay-kit';
 import { MetaTransactionData } from '@safe-global/safe-core-sdk-types'
 import SafeApiKit from '@safe-global/api-kit';
 
+const chainConfig = {
+  chainNamespace: CHAIN_NAMESPACES.EIP155,
+  chainId: "0x5",
+  blockExplorer: "https://goerli.etherscan.io",
+  rpcTarget: "https://eth-goerli.public.blastapi.io",
+}
 const options = {
   clientId: 'BL7DvTW5eDnbbseTHotSiB8fFhueObVhMknseYNi4ICU8am0tB_6FWF-KU3i3gNjM5_IWs-mSNvBQEYSFTVB3AU',
-  web3AuthNetwork: "sapphire_mainnet",
-  chainConfig: {
-    chainNamespace: CHAIN_NAMESPACES.EIP155,
-    chainId: "0x89",
-    blockExplorer: "https://polygonscan.com",
-    rpcTarget: "https://polygon.llamarpc.com",
-  },
+  web3AuthNetwork: "cyan",
+  chainConfig,
    uiConfig: {
     theme: 'dark',
     loginMethodsOrder: ['google', 'facebook']
@@ -47,28 +48,36 @@ const modalConfig = {
     showOnMobile: false
   }
 }
+const eAAtsAddress = "0xe690B47888d8a955e975215f77BC5152e05be9b0";
 
 export const Order = () => {
   const [web3Pack, setWeb3Pack] = useState(null);
   const [web3, setWeb3] = useState(null);
   const [address, setAddress] = useState("");
   const [userInfo, setUserInfo] = useState(null);
+  const [contract, setContract] = useState(null);
 
   useEffect(() => {
     initWeb3AuthModal();
     checkLogin();
+    initWeb3Provider();
   }, [])
+
+  const initWeb3Provider = async () => {
+    try {
+      const provider = new Web3(chainConfig.rpcTarget);
+
+      await getOrderList(provider);
+      setWeb3(provider);
+    } catch (e) {
+      console.error("error:initWeb3Provider", e);
+    }
+  }
 
   const initWeb3AuthModal = async () => {
     try {
-        const config = {
-          chainNamespace: CHAIN_NAMESPACES.EIP155,
-          chainId: "0x89",
-          blockExplorer: "https://polygonscan.com/",
-          rpcTarget: "https://polygon.llamarpc.com",
-        };
       const privateKeyProvider = new EthereumPrivateKeyProvider({
-        config: { chainConfig: config }
+        config: { chainConfig }
       });
 
       const openloginAdapter = new OpenloginAdapter({
@@ -82,7 +91,7 @@ export const Order = () => {
       })
       // 인스턴스 생성
       const web3AuthConfig = {
-        txServiceUrl: 'https://safe-transaction-polygon.safe.global' // safe 관련
+        txServiceUrl: 'https://safe-transaction-goerli.safe.global' // safe 관련
       }
       const web3AuthModalPack = new Web3AuthModalPack(web3AuthConfig)
 
@@ -110,6 +119,18 @@ export const Order = () => {
     
     setAddress(address);
     setUserInfo(Object.keys(JSON.parse(userInfo)).length > 2 ? userInfo : null)
+  }
+
+  // 오더 리스트
+  const getOrderList = async (provider) => {
+    try {
+      const contract = new provider.eth.Contract(eAAts.abi, eAAtsAddress);
+      console.log(contract)
+      const list = await contract.methods.getOrdersByStatus(0).call();
+      console.log(list)
+    } catch (e) {
+      console.error("error:getOrderList", e);
+    }
   }
 
   const login = async () => {  
@@ -163,24 +184,6 @@ export const Order = () => {
       console.error("logout:error", e);
     }
   }
-
-  // const waitForReceipt = (hash: string, cb: Function) => {
-  //   // console.log('Start waitForReceipt: ', hash)
-  //   provider.httpWeb3.eth.getTransactionReceipt(hash, (err, receipt) => {
-  //     // console.log('getTransactionReceipt: ', receipt)
-  //     if (err) console.log("err: ", err);
-
-  //     if (receipt === undefined || receipt === null) {
-  //       // Try again in 1 second
-  //       window.setTimeout(() => {
-  //         waitForReceipt(hash, cb);
-  //       }, 1000);
-  //     } else {
-  //       // Transaction went through
-  //       if (cb) cb(receipt);
-  //     }
-  //   });
-  // };
 
   const sendTransaction = async () => {
     if (web3 === null) {
