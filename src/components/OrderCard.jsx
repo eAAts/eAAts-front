@@ -8,8 +8,11 @@ import {
   Heading,
   SimpleGrid,
   Text,
+  useDisclosure,
 } from '@chakra-ui/react';
 import { orderCardItem } from '../testcase';
+import { AddIcon } from '@chakra-ui/icons';
+import { OrderModal } from './OrderModal';
 
 const OrderCard = ({ item }) => {
   const {
@@ -41,7 +44,21 @@ const OrderCard = ({ item }) => {
   )
 }
 
+const AddOrderCard = ({ onClick }) => {
+  return (
+    <Card>
+      <CardBody>
+        <Button onClick={onClick}>
+          <AddIcon boxSize={10} />
+        </Button>
+      </CardBody>
+    </Card>
+  )
+}
+
 export const OrderCardList = () => {
+  const { isOpen, onOpen, onClose } = useDisclosure();
+
   return (
    <SimpleGrid spacing={10} templateColumns='repeat(auto-fill, minmax(200px, 1fr))'>
       {orderCardItem.length
@@ -52,6 +69,13 @@ export const OrderCardList = () => {
           <Text>There's no order list :(</Text>
         </>
       }
+      <AddOrderCard onClick={onOpen} />
+      <OrderModal
+        isOpen={isOpen}
+        onSubmit={(e) => console.log(e)}
+        onOpen={onOpen}
+        onClose={onClose}
+      />
   </SimpleGrid>
   );
 }
