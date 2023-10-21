@@ -139,7 +139,7 @@ export const Order = () => {
 
       // set user information (refresh action)
       window.localStorage.setItem("address", eoa);
-      window.localStorage.setItem("usefInfo", JSON.stringify(userInfo));
+      window.localStorage.setItem("userInfo", JSON.stringify(userInfo));
 
       setAddress(eoa);
       setUserInfo(userInfo)
@@ -154,6 +154,8 @@ export const Order = () => {
     const { status } = web3Auth.web3Auth;
     if (status === ADAPTER_EVENTS.READY || status === ADAPTER_EVENTS.CONNECTING) {
       alert("No login information. :(");
+      setAddress("");
+      setUserInfo(null);
       return;
     }
 
@@ -184,12 +186,12 @@ export const Order = () => {
 
   const checkLogin = () => {
     const address = window.localStorage.getItem("address")
-    const userInfo = window.localStorage.getItem("openlogin_store");
+    const userInfo = window.localStorage.getItem("userInfo");
     if (address === null) return;
     if (userInfo === null) return;
     
     setAddress(address);
-    setUserInfo(Object.keys(JSON.parse(userInfo)).length > 2 ? userInfo : null)
+    setUserInfo(JSON.parse(userInfo))
   }
 
   // const sendTransaction = async () => {
@@ -367,7 +369,7 @@ export const Order = () => {
           </>
           : <Button onClick={() => login()}>login</Button>
       }
-       <HStack spacing="5vh">
+      <HStack spacing="5vh">
         <OrderCheckbox list={["BeforeDelivery", "DuringDelivery", "AfterDelivery"]} />
         <OrderCheckbox list={["All", "Current", "My Order"]}/>
       </HStack>
