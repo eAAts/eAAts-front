@@ -10,45 +10,29 @@ import {
   Text,
   useDisclosure,
 } from '@chakra-ui/react';
-import { orderCardItem } from '../testcase';
 import { AddIcon } from '@chakra-ui/icons';
+
 import { OrderModal } from './OrderModal';
-
-const OrderCard = ({ item }) => {
-  const {
-    participants,
-    totalAmount,
-    minParticipants,
-    feeType,
-    status
-  } = item;
-  const Participants = participants.length
-    ? () => <><Text>Yummy :)</Text></>
-    : () => <><Text>None :(</Text></>
-
-  return (
-    <Card>
-      <CardHeader>
-        <Heading size='md'>${totalAmount}</Heading>
-      </CardHeader>
-      <CardBody>
-        <Participants />
-        <Text>minParticipants: {minParticipants}</Text>
-        <Text>feeType: {feeType}</Text>
-        <Text>status: {status}</Text>
-      </CardBody>
-      <CardFooter>
-        <Button>Order</Button>
-      </CardFooter>
-    </Card>
-  )
-}
+import { convertOrderCardFeeType, convertOrderCardStatus } from '../utils/convert';
 
 const AddOrderCard = ({ onClick }) => {
   return (
-    <Card>
-      <CardBody>
-        <Button onClick={onClick}>
+    <Card
+      border="1px"
+      borderColor="gray.300"
+      borderStyle="dashed"
+      background="none"
+    >
+      <CardBody
+        display="flex"
+        flexDirection="column"
+        justifyContent="center"
+      >
+        <Button
+          onClick={onClick}
+          height="100%"
+          background="none"
+        >
           <AddIcon boxSize={10} />
         </Button>
       </CardBody>
@@ -56,20 +40,68 @@ const AddOrderCard = ({ onClick }) => {
   )
 }
 
-export const OrderCardList = () => {
-  const { isOpen, onOpen, onClose } = useDisclosure();
+const OrderCard = ({ order, onClick }) => {
+  const {
+    participants,
+    totalAmount,
+    minParticipants,
+    feeType,
+    status
+  } = order;
+  const currentParticipants = participants.legnth;
+
+  // participant component
+  const Participants = currentParticipants
+    ? participants.map(participant =>
+        <Text fontSize={14} pl={2}>participant: {participant}</Text>
+      )
+    : () => <><Text fontSize={14} pl={2}>None :(</Text></>
 
   return (
-   <SimpleGrid spacing={10} templateColumns='repeat(auto-fill, minmax(200px, 1fr))'>
-      {orderCardItem.length
-        ? orderCardItem.map(item =>
-          <OrderCard item={item} key={new Date() + Math.random() + 4} />
+    <Card>
+      <CardHeader>
+        <Heading size='md' fontSize={20}>🚚 {convertOrderCardStatus(status)} 🚚</Heading>
+      </CardHeader>
+      <CardBody textAlign="left">
+        <Text fontSize={16} fontWeight="300">Total order amount</Text>
+        <Text fontSize={18} fontWeight="600">${totalAmount}</Text>
+        <Text fontSize={25} fontWeight="300" py={3}>
+          👥 {currentParticipants || 0} / {minParticipants}
+        </Text>
+        <Participants />
+        <Text fontSize={16} mt={10}>📦 {convertOrderCardFeeType(feeType)}</Text>
+        {/* TODO QR, URL */}
+      </CardBody>
+      <CardFooter>
+        <Button w="100%" onClick={onClick}>Join Order</Button>
+      </CardFooter>
+    </Card>
+  )
+}
+
+export const OrderCardList = ({ orderList, onClick }) => {
+  const { isOpen, onOpen, onClose } = useDisclosure();
+
+  const orderLength = orderList.length;
+
+  return (
+   <SimpleGrid spacing={10} templateColumns='repeat(auto-fill, minmax(270px, 1fr))'>
+      {/* order card item list */}
+      {orderLength
+        ? orderList.map(order =>
+          <OrderCard
+            key={new Date() + Math.random() + 4}
+            order={order}
+            onClick={onClick}
+          />
         )
         : <>
           <Text>There's no order list :(</Text>
         </>
       }
-      <AddOrderCard onClick={onOpen} />
+      {/* add order card */}
+      {orderLength && <AddOrderCard onClick={onOpen} />}
+      {/* add order modal */}
       <OrderModal
         isOpen={isOpen}
         onSubmit={(e) => console.log(e)}
