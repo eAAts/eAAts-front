@@ -56,23 +56,23 @@ const OrderCard = ({ order, onJoin }) => {
   // participant component
   const Participants = currentParticipants
     ? participants.map(participant =>
-        <Text fontSize={14} pl={2}>participant: {participant}</Text>
+        <Text fontSize={16} pl={2}>participant: {participant}</Text>
       )
-    : () => <><Text fontSize={14} pl={2}>None :(</Text></>
+    : () => <><Text fontSize={16} pl={2}>None :(</Text></>
 
   return (
     <Card>
       <CardHeader>
-        <Heading size='md' fontSize={20}>🚚 {convertOrderCardStatus(status)} 🚚</Heading>
+        <Heading size='md' fontSize={24}>🚚 {convertOrderCardStatus(status)} 🚚</Heading>
       </CardHeader>
       <CardBody textAlign="left">
-        <Text fontSize={16} fontWeight="300">Total order amount</Text>
-        <Text fontSize={18} fontWeight="600">${totalAmount}</Text>
-        <Text fontSize={25} fontWeight="300" py={3}>
+        <Text fontSize={20} fontWeight="300">Total order amount</Text>
+        <Text fontSize={24} fontWeight="600">${totalAmount}</Text>
+        <Text fontSize={28} fontWeight="300" py={3}>
           👥 {currentParticipants || 0} / {minParticipants}
         </Text>
         <Participants />
-        <Text fontSize={16} mt={10}>📦 {convertOrderCardFeeType(feeType)}</Text>
+        <Text fontSize={18} mt={10}>📦 {convertOrderCardFeeType(feeType)}</Text>
       </CardBody>
       <CardFooter>
         <Button w="100%" onClick={onOpen}>Order detail</Button>
@@ -88,7 +88,7 @@ export const OrderCardList = ({ orderList, onJoin, onCreate }) => {
   const orderLength = orderList.length;
 
   return (
-   <SimpleGrid spacing={10} templateColumns='repeat(auto-fill, minmax(270px, 1fr))'>
+   <SimpleGrid spacing={10} templateColumns='repeat(auto-fill, minmax(300px, 1fr))'>
       {/* order card item list */}
       {orderLength
         ? orderList.map(order =>

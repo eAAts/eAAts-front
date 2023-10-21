@@ -190,7 +190,6 @@ export const Order = () => {
     if(provider === null || contract === null) return;
 
     try {
-      // TODO params option, merge order detail
       const orderList = await contract.methods.getOrdersByStatus(0).call();
       setOrderList(orderList);
     } catch (e) {
@@ -198,7 +197,7 @@ export const Order = () => {
     }
   }
 
-  const joinOrder = async () => {
+  const joinOrder = async (payment) => {
     if (web3Auth === null || contract === null) return;
 
     // if already logged in, logout
@@ -210,7 +209,7 @@ export const Order = () => {
     }
 
     try {
-
+      // TODO
     } catch (e) {
       console.error("error:joinOrder", e);
     }
@@ -432,6 +431,7 @@ export const Order = () => {
   return (
     <Box textAlign="center" fontSize="xl">
       <Grid minH="100vh" m="8">
+        {/* header */}
         <GridItem display="flex" justifyContent="space-between">
           <Image src={require("../assets/image/delivery.jpg")} alt="eAAts" maxH="5rem" />
           {/* user information */}
@@ -446,7 +446,7 @@ export const Order = () => {
                   <Avatar src={require(`../assets/image/${userInfo.typeOfLogin || "metamask"}.svg`)} alt="adapter" />
                   {/* wallet trigger */}
                   <Popover trigger="hover">
-                      <PopoverTrigger>
+                    <PopoverTrigger>
                       <Tag
                         onClick={() => setTagTrigger(!tagTrigger)}
                         border="1px"
@@ -460,6 +460,7 @@ export const Order = () => {
                         }
                       </Tag>
                     </PopoverTrigger>
+                    {/* logout button */}
                     <PopoverContent w="6rem">
                       <Button onClick={() => logout()}>logout</Button>
                     </PopoverContent>
@@ -480,7 +481,7 @@ export const Order = () => {
         {orderList &&
           <OrderCardList
             orderList={orderList}
-            onJoin={() => joinOrder()}
+            onJoin={(payment) => joinOrder(payment)}
             onCreate={(order) => createOrder(order)}
           />
         }

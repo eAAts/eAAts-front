@@ -32,6 +32,7 @@ const FoodMenu = [
     price: 5
   }
 ]
+const options = ["USDC", "ETH"];
 
 const FoodMenuGrid = ({ menu }) => {
   const {
@@ -95,11 +96,11 @@ const PaymentRadio = (props) => {
 }
 
 export const OrderCardModal = ({ isOpen, onClose, onJoin }) => {
-  const options = ["USDC", "ETH"];
+  const [paymentType, setPaymentType] = useState(options[0]);
 
   const { getRootProps, getRadioProps } = useRadioGroup({
     defaultValue: options[0],
-    onChange: (e) => console.log(e),
+    onChange: (v) => setPaymentType(v),
   });
   const group = getRootProps();
 
@@ -108,7 +109,7 @@ export const OrderCardModal = ({ isOpen, onClose, onJoin }) => {
       <ModalOverlay />
       <ModalContent>
         <ModalHeader>Order</ModalHeader>
-        <ModalCloseButton top={3} />
+        <ModalCloseButton top={4} />
         <ModalBody>
           {/* QR */}
           <Box
@@ -119,13 +120,11 @@ export const OrderCardModal = ({ isOpen, onClose, onJoin }) => {
             background="white"
             overflow="hidden"
           >
-          {/* TODO real QR */}
-          <Image
-            src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/QR_code_for_mobile_English_Wikipedia.svg/1024px-QR_code_for_mobile_English_Wikipedia.svg.png"
-            alt="QR"
-          />
+            <Image
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/QR_code_for_mobile_English_Wikipedia.svg/1024px-QR_code_for_mobile_English_Wikipedia.svg.png"
+              alt="QR"
+            />
           </Box>
-          {/* TODO URL */}
           <Text
             fontWeight={500}
             textDecoration="underline"
@@ -135,11 +134,11 @@ export const OrderCardModal = ({ isOpen, onClose, onJoin }) => {
             https://ethglobal.com/
           </Text>
           {/* order contents */}
-          <Text fontSize={20} fontWeight="700">🏪 Restaurant &gt; eAAts Restaurant</Text>
+          <Text fontSize={20} fontWeight="700" mt="2rem">🏪 Restaurant &gt; eAAts Restaurant</Text>
           {/* food menu */}
-          <Text fontSize={20} fontWeight="700">😋 Food Menu</Text>
+          <Text fontSize={20} fontWeight="700" mt="2">😋 Food Menu</Text>
           {FoodMenu &&
-            FoodMenu.map(menu => (<FoodMenuGrid menu={menu} key={new Date() + Math.random() + 2} />))
+            FoodMenu.map(menu => (<FoodMenuGrid menu={menu} key={Math.random() + 2} />))
           }
           {/* payment */}
           <Text fontSize={20} fontWeight="700">💳 Payment</Text>
@@ -159,7 +158,7 @@ export const OrderCardModal = ({ isOpen, onClose, onJoin }) => {
             w="100%"
             h="3rem"
             mx={2}
-            onClick={onJoin}
+            onClick={() => onJoin(paymentType)}
           >
             Join
           </Button>
