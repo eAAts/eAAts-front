@@ -104,9 +104,8 @@ export const OrderCardList = ({ orderList, onClick }) => {
       {/* add order modal */}
       <OrderModal
         isOpen={isOpen}
-        onSubmit={(e) => console.log(e)}
-        onOpen={onOpen}
         onClose={onClose}
+        onSubmit={(e) => console.log(e)}
       />
   </SimpleGrid>
   );

@@ -1,4 +1,3 @@
-// OrderCard component
 // fee type
 export const convertOrderCardFeeType = (feeType) => {
     switch (feeType) {
