@@ -13,7 +13,7 @@ import {
 import { AddIcon } from '@chakra-ui/icons';
 
 import { OrderModal } from './OrderModal';
-import { OrderCardDetail } from './OrderCardDetail';
+import { OrderCardModal } from './OrderCardModal';
 import { convertOrderCardFeeType, convertOrderCardStatus } from '../utils/convert';
 
 const AddOrderCard = ({ onClick }) => {
@@ -77,7 +77,7 @@ const OrderCard = ({ order, onJoin }) => {
       <CardFooter>
         <Button w="100%" onClick={onOpen}>Order detail</Button>
       </CardFooter>
-      <OrderCardDetail isOpen={isOpen} onClose={onClose} onJoin={onJoin} />
+      <OrderCardModal isOpen={isOpen} onClose={onClose} onJoin={onJoin} />
     </Card>
   )
 }
