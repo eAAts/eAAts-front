@@ -139,7 +139,7 @@ export const OrderCardModal = ({ isOpen, onClose, onJoin }) => {
           {/* food menu */}
           <Text fontSize={20} fontWeight="700">😋 Food Menu</Text>
           {FoodMenu &&
-            FoodMenu.map(menu => (<FoodMenuGrid menu={menu} />))
+            FoodMenu.map(menu => (<FoodMenuGrid menu={menu} key={new Date() + Math.random() + 2} />))
           }
           {/* payment */}
           <Text fontSize={20} fontWeight="700">💳 Payment</Text>
