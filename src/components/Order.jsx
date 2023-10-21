@@ -16,12 +16,14 @@ import { OrderCardList } from './OrderCard';
 import { OrderCheckbox } from './OrderCheckbox';
 import { ColorModeSwitcher } from '../ColorModeSwitcher';
 import eAAts from '../eAAts.json'
+import { ethers } from 'ethers';
+import Safe, { EthersAdapter } from '@safe-global/protocol-kit';
 
 const chainConfig = {
   chainNamespace: CHAIN_NAMESPACES.EIP155,
   chainId: "0x13881",
   blockExplorer: "https://mumbai.polygonscan.com",
-  rpcTarget: "https://polygon-mumbai-bor.publicnode.com",
+  rpcTarget: "https://rpc.ankr.com/polygon_mumbai",
 }
 // for open login, modal pack options
 const settings = {
@@ -57,7 +59,7 @@ const modalConfig = {
 }
 
 const eAAtsAddress = "0xBB97CcD6EAB2891eac05A67181aa45f7e8a84c3C"; // mumbai
-const safeAddress = "";
+const safeAddress = "0x2E5f05e205E66aC258B0f10CBa6E386395d0c29f";
 
 export const Order = () => {
   const [web3Auth, setWeb3Auth] = useState(null); // web3AuthModalPack
@@ -129,20 +131,20 @@ export const Order = () => {
     try {
       const { eoa, safes } = await web3Auth.signIn();
       console.log("safes", safes)
+      // ["0x2E5f05e205E66aC258B0f10CBa6E386395d0c29f", "0x8F5be83Bb5f7308875eBd004E70FcEeD0B4E31Db"]
 
       // social login info
       const userInfo = await web3Auth.getUserInfo();
 
-      // TODO if using safe, set auth provider
-      // const provider = web3Auth.getProvider();
-      // setProvider(provider);
-
+      // set auth provider
+      const provider = web3Auth.getProvider();
       // set user information (refresh action)
       window.localStorage.setItem("address", eoa);
       window.localStorage.setItem("userInfo", JSON.stringify(userInfo));
 
       setAddress(eoa);
       setUserInfo(userInfo)
+      setProvider(provider);
     } catch (e) {
       console.error("login:error", e)
     }
@@ -152,8 +154,8 @@ export const Order = () => {
     if (web3Auth === null) return;
     
     const { status } = web3Auth.web3Auth;
-    if (status === ADAPTER_EVENTS.READY || status === ADAPTER_EVENTS.CONNECTING) {
-      alert("No login information. :(");
+    if (status !== ADAPTER_EVENTS.CONNECTED) {
+      alert("Session expired. :(");
       setAddress("");
       setUserInfo(null);
       return;
@@ -184,11 +186,71 @@ export const Order = () => {
     }
   }
 
+  const joinOrder = async () => {
+    if (web3Auth === null || contract === null) return;
+
+    // if already logged in, logout
+    const { status } = web3Auth.web3Auth;
+    if (status !== ADAPTER_EVENTS.CONNECTED) {
+      alert("Please log in first. :)");
+      await login();
+      return;
+    }
+
+    try {
+
+    } catch (e) {
+      console.error("error:joinOrder", e);
+    }
+  };
+
+  const createOrder = async (order) => {
+    if (web3Auth === null || contract === null) return;
+
+    // if already logged in, logout
+    const { status } = web3Auth.web3Auth;
+    if (status !== ADAPTER_EVENTS.CONNECTED) {
+      alert("Please log in first. :)");
+      await login();
+      return;
+    }
+
+    const { minParticipants, feeType } = order;
+    try {
+      // data encode
+      const encodeABI = contract.methods.createOrder(minParticipants, feeType).encodeABI();
+
+      // set for safe
+      const authProvider = new ethers.providers.Web3Provider(web3Auth.getProvider());
+      const signer = authProvider.getSigner();
+      const ethAdapter = new EthersAdapter({
+        ethers,
+        signerOrProvider: signer || authProvider
+      });
+      const safeSDK = await Safe.create({
+        ethAdapter,
+        safeAddress
+      });
+
+      const safeTransactionData = {
+        to: eAAtsAddress,
+        data: encodeABI,
+        value: "0x0",
+      };
+      // signing?
+      const safeTransaction = await safeSDK.createTransaction({ safeTransactionData});
+      console.log(safeTransaction);
+
+    } catch (e) {
+      console.error("error:createOrder", e);
+    }
+  };
+
+  // refresh keep user info
   const checkLogin = () => {
     const address = window.localStorage.getItem("address")
     const userInfo = window.localStorage.getItem("userInfo");
-    if (address === null) return;
-    if (userInfo === null) return;
+    if (address === null || userInfo === null) return;
     
     setAddress(address);
     setUserInfo(JSON.parse(userInfo))
@@ -357,9 +419,11 @@ export const Order = () => {
 
   return (
     <Box textAlign="center" fontSize="xl">
-      <Button onClick={() => logout()}>logout</Button>
-      {userInfo !== null
+      {/* user information */}
+      {userInfo === null
         ?
+          <Button onClick={() => login()}>login</Button>
+        : 
           <>
             <Button onClick={() => logout()}>logout</Button>
             <Text>address: {address}</Text>
@@ -367,19 +431,21 @@ export const Order = () => {
             <Text>name: {userInfo.name}</Text>
             <Text>typeOfLogin: {userInfo.typeOfLogin}</Text>
           </>
-          : <Button onClick={() => login()}>login</Button>
       }
+      {/* options for order list */}
       <HStack spacing="5vh">
         <OrderCheckbox list={["BeforeDelivery", "DuringDelivery", "AfterDelivery"]} />
         <OrderCheckbox list={["All", "Current", "My Order"]}/>
       </HStack>
       <Grid minH="100vh" mx="10">
+        {/* change light/dark mode */}
         <ColorModeSwitcher justifySelf="flex-end" />
+        {/* order item */}
         {orderList &&
           <OrderCardList
             orderList={orderList}
-            onClick={() => console.log("join order")}
-            onSubmit={() => console.log("submit order")}
+            onClick={() => joinOrder()}
+            onSubmit={(order) => createOrder(order)}
           />
         }
         </Grid>
