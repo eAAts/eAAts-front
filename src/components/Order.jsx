@@ -24,9 +24,9 @@ import SafeApiKit from '@safe-global/api-kit';
 
 const chainConfig = {
   chainNamespace: CHAIN_NAMESPACES.EIP155,
-  chainId: "0x5",
-  blockExplorer: "https://goerli.etherscan.io",
-  rpcTarget: "https://eth-goerli.public.blastapi.io",
+  chainId: "0x13881",
+  blockExplorer: "https://mumbai.polygonscan.com",
+  rpcTarget: "https://polygon-mumbai-bor.publicnode.com",
 }
 const options = {
   clientId: 'BL7DvTW5eDnbbseTHotSiB8fFhueObVhMknseYNi4ICU8am0tB_6FWF-KU3i3gNjM5_IWs-mSNvBQEYSFTVB3AU',
@@ -48,7 +48,9 @@ const modalConfig = {
     showOnMobile: false
   }
 }
-const eAAtsAddress = "0xe690B47888d8a955e975215f77BC5152e05be9b0";
+const txServiceUrl = "https://safe-transaction-goerli.safe.global";
+const eAAtsAddress = "0xBB97CcD6EAB2891eac05A67181aa45f7e8a84c3C"; // mumbai address
+const safeAddress = "";
 
 export const Order = () => {
   const [web3Pack, setWeb3Pack] = useState(null);
@@ -56,6 +58,7 @@ export const Order = () => {
   const [address, setAddress] = useState("");
   const [userInfo, setUserInfo] = useState(null);
   const [contract, setContract] = useState(null);
+  const [orderList, setOrderList] = useState(null);
 
   useEffect(() => {
     initWeb3AuthModal();
@@ -91,7 +94,7 @@ export const Order = () => {
       })
       // 인스턴스 생성
       const web3AuthConfig = {
-        txServiceUrl: 'https://safe-transaction-goerli.safe.global' // safe 관련
+        txServiceUrl, // safe 관련
       }
       const web3AuthModalPack = new Web3AuthModalPack(web3AuthConfig)
 
@@ -125,9 +128,10 @@ export const Order = () => {
   const getOrderList = async (provider) => {
     try {
       const contract = new provider.eth.Contract(eAAts.abi, eAAtsAddress);
-      console.log(contract)
-      const list = await contract.methods.getOrdersByStatus(0).call();
-      console.log(list)
+      const orderList = await contract.methods.getOrdersByStatus(0).call();
+
+      setContract(contract);
+      setOrderList(orderList);
     } catch (e) {
       console.error("error:getOrderList", e);
     }
@@ -191,9 +195,6 @@ export const Order = () => {
       return;
     }
     try {
-      // contract 객체 만들기
-      const contract = new web3.eth.Contract(eAAts.abi, "0xBB97CcD6EAB2891eac05A67181aa45f7e8a84c3C")
-      console.log(contract);
       // * sign
       // await web3.eth.personal.sign("1234", address)
       // * list
@@ -356,9 +357,9 @@ export const Order = () => {
         <OrderCheckbox list={["BeforeDelivery", "DuringDelivery", "AfterDelivery"]} />
         <OrderCheckbox list={["All", "Current", "My Order"]}/>
       </HStack>
-      <Grid minH="100vh" p={5} px={10}>
+      <Grid minH="100vh" mx="10">
         <ColorModeSwitcher justifySelf="flex-end" />
-        <OrderCardList />
+        {orderList && <OrderCardList orderList={orderList} onClick={() => console.log("join order")} />}
         </Grid>
       </Box>
   );
