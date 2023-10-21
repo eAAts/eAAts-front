@@ -54,7 +54,7 @@ export const OrderModal = ({ isOpen, onClose, onCreate }) => {
     <Modal isOpen={isOpen} onClose={onClose}>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Add Order</ModalHeader>
+        <ModalHeader>Create Order</ModalHeader>
         <ModalCloseButton top={3} />
         <ModalBody>
           <FormControl>

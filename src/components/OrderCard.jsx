@@ -73,7 +73,6 @@ const OrderCard = ({ order, onJoin }) => {
         </Text>
         <Participants />
         <Text fontSize={16} mt={10}>📦 {convertOrderCardFeeType(feeType)}</Text>
-        {/* TODO QR, URL */}
       </CardBody>
       <CardFooter>
         <Button w="100%" onClick={onOpen}>Order detail</Button>
