@@ -1,23 +1,31 @@
 import React, { useEffect, useState } from 'react';
 import Web3 from 'web3';
+import { ethers } from 'ethers';
 import { ADAPTER_EVENTS, CHAIN_NAMESPACES, WALLET_ADAPTERS } from '@web3auth/base'
 import { EthereumPrivateKeyProvider } from '@web3auth/ethereum-provider';
 import { OpenloginAdapter } from '@web3auth/openlogin-adapter';
 import { Web3AuthModalPack } from '@safe-global/auth-kit';
+import Safe, { EthersAdapter } from '@safe-global/protocol-kit';
 import {
+  Avatar,
   Box,
   Button,
   Grid,
+  GridItem,
   HStack,
-  Text,
+  Image,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+  Tag,
 } from '@chakra-ui/react';
 
 import { OrderCardList } from './OrderCard';
 import { OrderCheckbox } from './OrderCheckbox';
 import { ColorModeSwitcher } from '../ColorModeSwitcher';
 import eAAts from '../eAAts.json'
-import { ethers } from 'ethers';
-import Safe, { EthersAdapter } from '@safe-global/protocol-kit';
+
+import { convertAddress } from '../utils/convert';
 
 const chainConfig = {
   chainNamespace: CHAIN_NAMESPACES.EIP155,
@@ -70,6 +78,7 @@ export const Order = () => {
   const [contract, setContract] = useState(null);
   const [address, setAddress] = useState("");
   const [userInfo, setUserInfo] = useState(null);
+  const [tagTrigger, setTagTrigger] = useState(true); // true: wallet address, false: social email
 
   const [orderList, setOrderList] = useState(null);
 
@@ -422,24 +431,49 @@ export const Order = () => {
 
   return (
     <Box textAlign="center" fontSize="xl">
-      {/* user information */}
-      {userInfo === null
-        ?
-          <Button onClick={() => login()}>login</Button>
-        : 
-          <>
-            <Button onClick={() => logout()}>logout</Button>
-            <Text>address: {address}</Text>
-            <Text>email: {userInfo.email}</Text>
-            <Text>name: {userInfo.name}</Text>
-          </>
-      }
-      {/* options for order list */}
-      {/* <HStack spacing="5vh">
-        <OrderCheckbox list={deliveryStatus} />
-        <OrderCheckbox list={orderType}/>
-      </HStack> */}
-      <Grid minH="100vh" mx="10">
+      <Grid minH="100vh" m="8">
+        <GridItem display="flex" justifyContent="space-between">
+          <Image src={require("../assets/image/delivery.jpg")} alt="eAAts" maxH="5rem" />
+          {/* user information */}
+          {userInfo === null
+            ?
+              <GridItem>
+                <Button onClick={() => login()}>login</Button>
+              </GridItem>
+            : 
+              <GridItem textAlign="right">
+                <HStack>
+                  <Avatar src={require(`../assets/image/${userInfo.typeOfLogin || "metamask"}.svg`)} alt="adapter" />
+                  {/* wallet trigger */}
+                  <Popover trigger="hover">
+                      <PopoverTrigger>
+                      <Tag
+                        onClick={() => setTagTrigger(!tagTrigger)}
+                        border="1px"
+                        background="none"
+                      >
+                        {tagTrigger
+                          ? convertAddress(address)
+                          : userInfo.email
+                            ? userInfo.email
+                            : convertAddress(address)
+                        }
+                      </Tag>
+                    </PopoverTrigger>
+                    <PopoverContent w="6rem">
+                      <Button onClick={() => logout()}>logout</Button>
+                    </PopoverContent>
+                  </Popover>
+                  
+                </HStack>
+              </GridItem>
+          }
+        </GridItem>
+        {/* options for order list */}
+        {/* <HStack spacing="5vh">
+          <OrderCheckbox list={deliveryStatus} />
+          <OrderCheckbox list={orderType}/>
+        </HStack> */}
         {/* change light/dark mode */}
         <ColorModeSwitcher justifySelf="flex-end" />
         {/* order item */}

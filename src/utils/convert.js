@@ -23,3 +23,12 @@ export const convertOrderCardStatus = (status) => {
             return "-"
     }
 }
+
+export const convertAddress = (address) => {
+    if (!address.length) return "-"
+    
+    const startAddress = address.slice(0, 5);
+    const endAddress = address.slice(address.length - 4, address.length);
+
+    return `${startAddress}...${endAddress}`;
+}
