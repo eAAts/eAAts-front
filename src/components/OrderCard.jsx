@@ -73,7 +73,7 @@ const OrderCard = ({ order, onClick }) => {
         {/* TODO QR, URL */}
       </CardBody>
       <CardFooter>
-        <Button w="100%" onClick={onClick}>Join Order</Button>
+        <Button w="100%" onClick={onClick}>Order detail</Button>
       </CardFooter>
     </Card>
   )
