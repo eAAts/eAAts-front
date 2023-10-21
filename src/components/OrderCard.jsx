@@ -79,7 +79,7 @@ const OrderCard = ({ order, onClick }) => {
   )
 }
 
-export const OrderCardList = ({ orderList, onClick }) => {
+export const OrderCardList = ({ orderList, onClick, onSubmit }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   const orderLength = orderList.length;
@@ -105,7 +105,7 @@ export const OrderCardList = ({ orderList, onClick }) => {
       <OrderModal
         isOpen={isOpen}
         onClose={onClose}
-        onSubmit={(e) => console.log(e)}
+        onSubmit={onSubmit}
       />
   </SimpleGrid>
   );

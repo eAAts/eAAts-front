@@ -1,4 +1,9 @@
 import React, { useEffect, useState } from 'react';
+import Web3 from 'web3';
+import { ADAPTER_EVENTS, CHAIN_NAMESPACES, WALLET_ADAPTERS } from '@web3auth/base'
+import { EthereumPrivateKeyProvider } from '@web3auth/ethereum-provider';
+import { OpenloginAdapter } from '@web3auth/openlogin-adapter';
+import { Web3AuthModalPack } from '@safe-global/auth-kit';
 import {
   Box,
   Button,
@@ -6,27 +11,29 @@ import {
   HStack,
   Text,
 } from '@chakra-ui/react';
-import { CHAIN_NAMESPACES, WALLET_ADAPTERS } from '@web3auth/base'
 
-import { ColorModeSwitcher } from '../ColorModeSwitcher';
 import { OrderCardList } from './OrderCard';
-import { Web3AuthModalPack } from '@safe-global/auth-kit';
-import Web3 from 'web3';
-import eAAts from '../eAAts.json'
 import { OrderCheckbox } from './OrderCheckbox';
-import { ethers } from 'ethers';
-import Safe, { EthersAdapter, SafeFactory, getSafeContract } from '@safe-global/protocol-kit';
-import { OpenloginAdapter } from '@web3auth/openlogin-adapter';
-import { EthereumPrivateKeyProvider } from '@web3auth/ethereum-provider';
-import { GelatoRelayPack } from '@safe-global/relay-kit';
-import { MetaTransactionData } from '@safe-global/safe-core-sdk-types'
-import SafeApiKit from '@safe-global/api-kit';
+import { ColorModeSwitcher } from '../ColorModeSwitcher';
+import eAAts from '../eAAts.json'
 
 const chainConfig = {
   chainNamespace: CHAIN_NAMESPACES.EIP155,
   chainId: "0x13881",
   blockExplorer: "https://mumbai.polygonscan.com",
   rpcTarget: "https://polygon-mumbai-bor.publicnode.com",
+}
+// for open login, modal pack options
+const settings = {
+  loginSettings: {
+    mfaLevel: 'mandatory'
+  },
+  adapterSettings: {
+    uxMode: 'popup',
+  }
+};
+const web3AuthConfig = {
+  txServiceUrl : "https://safe-transaction-goerli.safe.global" // safe?
 }
 const options = {
   clientId: 'BL7DvTW5eDnbbseTHotSiB8fFhueObVhMknseYNi4ICU8am0tB_6FWF-KU3i3gNjM5_IWs-mSNvBQEYSFTVB3AU',
@@ -48,72 +55,133 @@ const modalConfig = {
     showOnMobile: false
   }
 }
-const txServiceUrl = "https://safe-transaction-goerli.safe.global";
-const eAAtsAddress = "0xBB97CcD6EAB2891eac05A67181aa45f7e8a84c3C"; // mumbai address
+
+const eAAtsAddress = "0xBB97CcD6EAB2891eac05A67181aa45f7e8a84c3C"; // mumbai
 const safeAddress = "";
 
 export const Order = () => {
-  const [web3Pack, setWeb3Pack] = useState(null);
-  const [web3, setWeb3] = useState(null);
+  const [web3Auth, setWeb3Auth] = useState(null); // web3AuthModalPack
+  const [provider, setProvider] = useState(null); // web3 provider
+  const [contract, setContract] = useState(null);
   const [address, setAddress] = useState("");
   const [userInfo, setUserInfo] = useState(null);
-  const [contract, setContract] = useState(null);
+
   const [orderList, setOrderList] = useState(null);
 
-  useEffect(() => {
-    initWeb3AuthModal();
-    checkLogin();
-    initWeb3Provider();
-  }, [])
-
-  const initWeb3Provider = async () => {
+  // init web3 provider, eAAts contract
+  const initWeb3 = async () => {
     try {
-      const provider = new Web3(chainConfig.rpcTarget);
+      const { rpcTarget } = chainConfig;
+      const provider = new Web3(rpcTarget); // for before logging in
+      const contract = new provider.eth.Contract(eAAts.abi, eAAtsAddress);
 
       await getOrderList(provider);
-      setWeb3(provider);
+
+      setProvider(provider);
+      setContract(contract);
     } catch (e) {
-      console.error("error:initWeb3Provider", e);
+      console.error("error:initWeb3", e);
     }
   }
 
   const initWeb3AuthModal = async () => {
     try {
+      // util for modal pack
       const privateKeyProvider = new EthereumPrivateKeyProvider({
         config: { chainConfig }
       });
-
       const openloginAdapter = new OpenloginAdapter({
-        loginSettings: {
-          mfaLevel: 'mandatory'
-        },
-        adapterSettings: {
-          uxMode: 'popup',
-        },
+        ...settings,
         privateKeyProvider
       })
-      // 인스턴스 생성
-      const web3AuthConfig = {
-        txServiceUrl, // safe 관련
-      }
-      const web3AuthModalPack = new Web3AuthModalPack(web3AuthConfig)
 
-      // 옵션 파람스 https://web3auth.io/docs/sdk/pnp/web/modal/initialize#instantiating-web3auth
+      // create modal instance
+      const web3AuthModalPack = new Web3AuthModalPack(web3AuthConfig)
+      // parameter > https://web3auth.io/docs/sdk/pnp/web/modal/initialize#instantiating-web3auth
       await web3AuthModalPack.init({ options, adapters: [openloginAdapter], modalConfig });
 
-      // 이벤트 구독
-      web3AuthModalPack.subscribe("connected", (e) => console.log("connect!", e));
-      web3AuthModalPack.subscribe("connecting", (e) =>  console.log("connecting...", e));
-      web3AuthModalPack.subscribe("disconnected", (e) => console.log("disconnect", e));
+      // subscribe connect event
+      subscribeEvent(web3AuthModalPack)
 
-      setWeb3Pack(web3AuthModalPack)
+      setWeb3Auth(web3AuthModalPack)
     } catch (e) {
       console.error("initWeb3AuthModal:error", e);
     }
   }
 
-  // ! 상태관리
-  // 새로고침 시 데이터 날아가서 가져옴
+  const subscribeEvent = (web3Auth) => {
+    web3Auth.subscribe(ADAPTER_EVENTS.CONNECTED, (e) => console.log("connect", e));
+    web3Auth.subscribe(ADAPTER_EVENTS.CONNECTING, (e) =>  console.log("connecting", e));
+    web3Auth.subscribe(ADAPTER_EVENTS.DISCONNECTED, () => console.log("disconnect"));
+  }
+
+  const login = async () => {  
+    if (web3Auth === null) return;
+
+    // if already logged in, logout
+    const { status } = web3Auth.web3Auth;
+    if (status === ADAPTER_EVENTS.CONNECTED) {
+      alert("There's an error. Please try again. :(");
+      await logout();
+      return;
+    }
+
+    try {
+      const { eoa, safes } = await web3Auth.signIn();
+      console.log("safes", safes)
+
+      // social login info
+      const userInfo = await web3Auth.getUserInfo();
+
+      // TODO if using safe, set auth provider
+      // const provider = web3Auth.getProvider();
+      // setProvider(provider);
+
+      // set user information (refresh action)
+      window.localStorage.setItem("address", eoa);
+      window.localStorage.setItem("usefInfo", JSON.stringify(userInfo));
+
+      setAddress(eoa);
+      setUserInfo(userInfo)
+    } catch (e) {
+      console.error("login:error", e)
+    }
+  }
+
+  const logout = async () => {
+    if (web3Auth === null) return;
+    
+    const { status } = web3Auth.web3Auth;
+    if (status === ADAPTER_EVENTS.READY || status === ADAPTER_EVENTS.CONNECTING) {
+      alert("No login information. :(");
+      return;
+    }
+
+    try {
+     await web3Auth.signOut();
+
+     window.localStorage.removeItem("address");
+     window.localStorage.removeItem("userInfo");
+
+     setAddress("");
+     setUserInfo(null);
+    } catch (e) {
+      console.error("logout:error", e);
+    }
+  }
+
+  const getOrderList = async () => {
+    if(provider === null || contract === null) return;
+
+    try {
+      // TODO params option
+      const orderList = await contract.methods.getOrdersByStatus(0).call();
+      setOrderList(orderList);
+    } catch (e) {
+      console.error("error:getOrderList", e);
+    }
+  }
+
   const checkLogin = () => {
     const address = window.localStorage.getItem("address")
     const userInfo = window.localStorage.getItem("openlogin_store");
@@ -124,119 +192,54 @@ export const Order = () => {
     setUserInfo(Object.keys(JSON.parse(userInfo)).length > 2 ? userInfo : null)
   }
 
-  // 오더 리스트
-  const getOrderList = async (provider) => {
-    try {
-      const contract = new provider.eth.Contract(eAAts.abi, eAAtsAddress);
-      const orderList = await contract.methods.getOrdersByStatus(0).call();
+  // const sendTransaction = async () => {
+  //   if (web3 === null) {
+  //     alert("Failed :(");
+  //     return;
+  //   }
+  //   try {
+  //     // * sign
+  //     // await web3.eth.personal.sign("1234", address)
+  //     // * list
+  //     // const list = await contract.methods.getOrdersByStatus(0).call();
+  //     // send transaction
+  //     // * create order
+  //     const encodeABI = contract.methods.createOrder(100, 0).encodeABI();
+  //     // * join order
+  //     // const encodeABI = contract.methods.joinOrder(1, 2).encodeABI();
+  //     web3.eth.sendTransaction({
+  //       from: address,
+  //       to: "0xBB97CcD6EAB2891eac05A67181aa45f7e8a84c3C",
+  //       data: encodeABI,
+  //       gasPrice: 101000000000,
+  //       value: "0x0",
+  //     }, (err, hash) => {
+  //       console.log(err, hash)
+  //     })
+  //   } catch (e) {
+  //     console.error("sendTransaction:error", e);
+  //   }
+  // }
 
-      setContract(contract);
-      setOrderList(orderList);
-    } catch (e) {
-      console.error("error:getOrderList", e);
-    }
-  }
+  // const signer = async () => {
+  //   try {
+  //     console.log(web3);
+  //     const provider = new ethers.providers.Web3Provider(web3);
+  //     const providerJsonPrc = new ethers.providers.JsonRpcProvider("https://eth-goerli.public.blastapi.io");
+  //     const signer = provider.getSigner();
+  //     // console.log(web3, signer, 1234)
 
-  const login = async () => {  
-    if (web3Pack === null) {
-      alert("plz web3AuthModalPack init");
-      return;
-    }
-    const { status } = web3Pack.web3Auth;
-    if (status === "connected") {
-      alert("You are already logged :(");
-      return;
-    }
-
-    try {
-      const { eoa, safes } = await web3Pack.signIn();
-      // 소셜 로그인 정보
-      const userInfo = await web3Pack.getUserInfo();
-      console.log(web3Pack, eoa, safes, userInfo)
-      // web3 객체 만들기
-      const web3Provider = web3Pack.getProvider();
-      console.log(web3Provider,12345)
-      // const web3 = new ethers.providers.Web3Provider(web3Provider);
-
-      window.localStorage.setItem("address", eoa);
-      setWeb3(web3Provider);
-      setAddress(eoa);
-      setUserInfo(Object.keys(userInfo).length ? userInfo : null)
-    } catch (e) {
-      console.error("login:error", e)
-    }
-  }
-
-  const logout = async () => {
-    if (web3Pack === null) {
-      alert("plz web3AuthModalPack init");
-      return;
-    }
-    const { status } = web3Pack.web3Auth;
-    if (status === "ready" || status === "connecting") {
-      alert("You are not logged in :(");
-      return;
-    }
-
-    try {
-     await web3Pack.signOut();
-
-     window.localStorage.removeItem("address");
-     setAddress("");
-     setUserInfo(null);
-    } catch (e) {
-      console.error("logout:error", e);
-    }
-  }
-
-  const sendTransaction = async () => {
-    if (web3 === null) {
-      alert("Failed :(");
-      return;
-    }
-    try {
-      // * sign
-      // await web3.eth.personal.sign("1234", address)
-      // * list
-      // const list = await contract.methods.getOrdersByStatus(0).call();
-      // send transaction
-      // * create order
-      const encodeABI = contract.methods.createOrder(100, 0).encodeABI();
-      // * join order
-      // const encodeABI = contract.methods.joinOrder(1, 2).encodeABI();
-      web3.eth.sendTransaction({
-        from: address,
-        to: "0xBB97CcD6EAB2891eac05A67181aa45f7e8a84c3C",
-        data: encodeABI,
-        gasPrice: 101000000000,
-        value: "0x0",
-      }, (err, hash) => {
-        console.log(err, hash)
-      })
-    } catch (e) {
-      console.error("sendTransaction:error", e);
-    }
-  }
-
-  const signer = async () => {
-    try {
-      console.log(web3);
-      const provider = new ethers.providers.Web3Provider(web3);
-      const providerJsonPrc = new ethers.providers.JsonRpcProvider("https://eth-goerli.public.blastapi.io");
-      const signer = provider.getSigner();
-      // console.log(web3, signer, 1234)
-
-      const ethAdapter = new EthersAdapter({    
-        ethers,
-        signerOrProvider: signer // || provider
-      })
-      console.log(provider, signer, 2345, ethAdapter)
+  //     const ethAdapter = new EthersAdapter({    
+  //       ethers,
+  //       signerOrProvider: signer // || provider
+  //     })
+  //     console.log(provider, signer, 2345, ethAdapter)
       
-      // * Signing transaction https://docs.safe.global/safe-core-aa-sdk/auth-kit/web3auth#signing-transactions-using-the-web3authmodalpack-and-protocol-kit
-      const safeSDK = await Safe.create({
-        ethAdapter,
-        safeAddress : "0x4BD1f0331D7D3B928EB009aF9134888784f14218", // safeAddress?
-      })
+  //     // * Signing transaction https://docs.safe.global/safe-core-aa-sdk/auth-kit/web3auth#signing-transactions-using-the-web3authmodalpack-and-protocol-kit
+  //     const safeSDK = await Safe.create({
+  //       ethAdapter,
+  //       safeAddress : "0x4BD1f0331D7D3B928EB009aF9134888784f14218", // safeAddress?
+  //     })
 
       // const safeTransactionData = {
       //   to: "0x98f2738Cf1784471554aDf2D850131Eb0f415b53",
@@ -334,24 +337,35 @@ export const Order = () => {
 
       // const response = await relaykit.executeRelayTransaction(signedSafeTransaction, safeSDK, options);
       // console.log(`Relay Transaction Task ID: https://relay.gelato.digital/tasks/status/${response.taskId}`)
-    } catch (e) {
-      console.error("error:signer", e);
-    }
-  }
+  //   } catch (e) {
+  //     console.error("error:signer", e);
+  //   }
+  // }
+
+  useEffect(() => {
+    initWeb3();
+    initWeb3AuthModal();
+
+    checkLogin();
+  }, [])
+
+  useEffect(() => {
+    if(provider && contract) getOrderList();
+  }, [provider, contract]);
 
   return (
     <Box textAlign="center" fontSize="xl">
-      <Button onClick={() => login()}>login</Button>
       <Button onClick={() => logout()}>logout</Button>
-      <Button onClick={() => sendTransaction()}>sendTransaction</Button>
-      <Button onClick={() => signer()}>Signer</Button>
-      <Text>address: {address}</Text>
-      {userInfo !== null &&
-        <>
-          <Text>email: {userInfo.email}</Text>
-          <Text>name: {userInfo.name}</Text>
-          <Text>typeOfLogin: {userInfo.typeOfLogin}</Text>
-        </>
+      {userInfo !== null
+        ?
+          <>
+            <Button onClick={() => logout()}>logout</Button>
+            <Text>address: {address}</Text>
+            <Text>email: {userInfo.email}</Text>
+            <Text>name: {userInfo.name}</Text>
+            <Text>typeOfLogin: {userInfo.typeOfLogin}</Text>
+          </>
+          : <Button onClick={() => login()}>login</Button>
       }
        <HStack spacing="5vh">
         <OrderCheckbox list={["BeforeDelivery", "DuringDelivery", "AfterDelivery"]} />
@@ -359,7 +373,13 @@ export const Order = () => {
       </HStack>
       <Grid minH="100vh" mx="10">
         <ColorModeSwitcher justifySelf="flex-end" />
-        {orderList && <OrderCardList orderList={orderList} onClick={() => console.log("join order")} />}
+        {orderList &&
+          <OrderCardList
+            orderList={orderList}
+            onClick={() => console.log("join order")}
+            onSubmit={() => console.log("submit order")}
+          />
+        }
         </Grid>
       </Box>
   );
