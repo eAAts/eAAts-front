@@ -13,11 +13,9 @@ import {
   ModalFooter,
   ModalHeader,
   ModalOverlay,
-  SimpleGrid,
   Text,
   useRadio,
   useRadioGroup,
-  VStack,
 } from '@chakra-ui/react';
 
 const FoodMenu = [

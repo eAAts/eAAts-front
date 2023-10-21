@@ -61,6 +61,9 @@ const modalConfig = {
 const eAAtsAddress = "0xBB97CcD6EAB2891eac05A67181aa45f7e8a84c3C"; // mumbai
 const safeAddress = "0x2E5f05e205E66aC258B0f10CBa6E386395d0c29f";
 
+const deliveryStatus = ["Before delivery", "During delivery", "After delivery"];
+const orderType = ["Participating", "Owner"];
+
 export const Order = () => {
   const [web3Auth, setWeb3Auth] = useState(null); // web3AuthModalPack
   const [provider, setProvider] = useState(null); // web3 provider
@@ -178,7 +181,7 @@ export const Order = () => {
     if(provider === null || contract === null) return;
 
     try {
-      // TODO params option
+      // TODO params option, merge order detail
       const orderList = await contract.methods.getOrdersByStatus(0).call();
       setOrderList(orderList);
     } catch (e) {
@@ -429,14 +432,13 @@ export const Order = () => {
             <Text>address: {address}</Text>
             <Text>email: {userInfo.email}</Text>
             <Text>name: {userInfo.name}</Text>
-            <Text>typeOfLogin: {userInfo.typeOfLogin}</Text>
           </>
       }
       {/* options for order list */}
-      <HStack spacing="5vh">
-        <OrderCheckbox list={["BeforeDelivery", "DuringDelivery", "AfterDelivery"]} />
-        <OrderCheckbox list={["All", "Current", "My Order"]}/>
-      </HStack>
+      {/* <HStack spacing="5vh">
+        <OrderCheckbox list={deliveryStatus} />
+        <OrderCheckbox list={orderType}/>
+      </HStack> */}
       <Grid minH="100vh" mx="10">
         {/* change light/dark mode */}
         <ColorModeSwitcher justifySelf="flex-end" />
@@ -444,8 +446,8 @@ export const Order = () => {
         {orderList &&
           <OrderCardList
             orderList={orderList}
-            onClick={() => joinOrder()}
-            onSubmit={(order) => createOrder(order)}
+            onJoin={() => joinOrder()}
+            onCreate={(order) => createOrder(order)}
           />
         }
         </Grid>

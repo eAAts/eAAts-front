@@ -7,25 +7,26 @@ import {
   useCheckboxGroup,
   Stack
 } from '@chakra-ui/react';
-import React from 'react';
+import React, { useEffect } from 'react';
 
 export const OrderCheckbox = ({ list }) => {
   const { value, getCheckboxProps } = useCheckboxGroup({
     defaultValue: [],
   })
 
+  useEffect(() => {
+    
+  }, [value]);
+
   return (
-    <>
-      <Text textAlign="left">The selected checkboxes are: {value.sort()}</Text>
-      <Stack direction={['column', 'row']}>
-          {list && list.map((item) =>
-            <CheckBox {...getCheckboxProps({ value: `${item}` })} />)}
-      </Stack>
-      </>
+    <Stack direction={['column', 'row']}>
+        {list && list.map((item) =>
+          <CheckBox {...getCheckboxProps({ value: `${item}` })} />)}
+    </Stack>
   )
 }
 
-export const CheckBox = (props) => {
+const CheckBox = (props) => {
    const { state, getCheckboxProps, getInputProps, getLabelProps, htmlProps } =
       useCheckbox(props)
 
