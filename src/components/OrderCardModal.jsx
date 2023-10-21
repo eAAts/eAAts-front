@@ -6,6 +6,7 @@ import {
   GridItem,
   HStack,
   Image,
+  Link,
   Modal,
   ModalBody,
   ModalCloseButton,
@@ -17,6 +18,7 @@ import {
   useRadio,
   useRadioGroup,
 } from '@chakra-ui/react';
+import { ExternalLinkIcon } from '@chakra-ui/icons';
 
 const FoodMenu = [
   {
@@ -105,7 +107,7 @@ export const OrderCardModal = ({ isOpen, onClose, onJoin }) => {
   const group = getRootProps();
 
   return (
-    <Modal scrollBehavior="inside" isCentered={true} isOpen={isOpen} onClose={onClose}>
+    <Modal isOpen={isOpen} onClose={onClose}>
       <ModalOverlay />
       <ModalContent>
         <ModalHeader>Order</ModalHeader>
@@ -125,14 +127,10 @@ export const OrderCardModal = ({ isOpen, onClose, onJoin }) => {
               alt="QR"
             />
           </Box>
-          <Text
-            fontWeight={500}
-            textDecoration="underline"
-            textAlign="center"
-            my={3}
-          >
+          <Link display="flex" justifyContent="center" fontSize={14} my={3} isExternal={true} href="https://ethglobal.com/" >
             https://ethglobal.com/
-          </Text>
+            <ExternalLinkIcon ml="1" mt="1" />
+          </Link>
           {/* order contents */}
           <Text fontSize={20} fontWeight="700" mt="2rem">🏪 Restaurant &gt; eAAts Restaurant</Text>
           {/* food menu */}
