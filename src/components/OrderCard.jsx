@@ -13,6 +13,7 @@ import {
 import { AddIcon } from '@chakra-ui/icons';
 
 import { OrderModal } from './OrderModal';
+import { OrderCardDetail } from './OrderCardDetail';
 import { convertOrderCardFeeType, convertOrderCardStatus } from '../utils/convert';
 
 const AddOrderCard = ({ onClick }) => {
@@ -40,7 +41,9 @@ const AddOrderCard = ({ onClick }) => {
   )
 }
 
-const OrderCard = ({ order, onClick }) => {
+const OrderCard = ({ order, onJoin }) => {
+  const { isOpen, onOpen, onClose } = useDisclosure();
+
   const {
     participants,
     totalAmount,
@@ -73,13 +76,14 @@ const OrderCard = ({ order, onClick }) => {
         {/* TODO QR, URL */}
       </CardBody>
       <CardFooter>
-        <Button w="100%" onClick={onClick}>Order detail</Button>
+        <Button w="100%" onClick={onOpen}>Order detail</Button>
       </CardFooter>
+      <OrderCardDetail isOpen={isOpen} onClose={onClose} onJoin={onJoin} />
     </Card>
   )
 }
 
-export const OrderCardList = ({ orderList, onClick, onSubmit }) => {
+export const OrderCardList = ({ orderList, onJoin, onCreate }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   const orderLength = orderList.length;
@@ -92,7 +96,7 @@ export const OrderCardList = ({ orderList, onClick, onSubmit }) => {
           <OrderCard
             key={new Date() + Math.random() + 4}
             order={order}
-            onClick={onClick}
+            onJoin={onJoin}
           />
         )
         : <>
@@ -105,7 +109,7 @@ export const OrderCardList = ({ orderList, onClick, onSubmit }) => {
       <OrderModal
         isOpen={isOpen}
         onClose={onClose}
-        onSubmit={onSubmit}
+        onCreate={onCreate}
       />
   </SimpleGrid>
   );

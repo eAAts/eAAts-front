@@ -25,7 +25,7 @@ const initOrderData = {
   minParticipants: ""
 };
 
-export const OrderModal = ({ isOpen, onClose, onSubmit }) => {
+export const OrderModal = ({ isOpen, onClose, onCreate }) => {
   const [orderData, setOrderData] = useState(initOrderData);
   const [formError, setFormError] = useState(false);
   
@@ -87,7 +87,7 @@ export const OrderModal = ({ isOpen, onClose, onSubmit }) => {
             h="3rem"
             mx={2}
             isDisabled={formError}
-            onClick={() => onSubmit(orderData)}
+            onClick={() => onCreate(orderData)}
           >
             Submit
           </Button>
