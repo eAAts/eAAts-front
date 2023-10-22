@@ -27,12 +27,25 @@ import eAAts from '../eAAts.json'
 
 import { convertAddress } from '../utils/convert';
 
+import { PushAPI } from '@pushprotocol/restapi';
+const getOwnerPush = async () => {
+  try {
+    const ownerWallet = new ethers.Wallet(process.env.PUSH_PK);
+    const ownerPush = await PushAPI.initialize(ownerWallet, { env: 'staging' });
+    return ownerPush;
+  } catch (e) {
+    console.error('error:getOwnerPush', e);
+  }
+};
+const ownerPush = getOwnerPush();
+
 const chainConfig = {
   chainNamespace: CHAIN_NAMESPACES.EIP155,
-  chainId: "0x13881",
-  blockExplorer: "https://mumbai.polygonscan.com",
-  rpcTarget: "https://rpc.ankr.com/polygon_mumbai",
-}
+  chainId: '0x13881',
+  blockExplorer: 'https://mumbai.polygonscan.com',
+  rpcTarget: 'https://rpc.ankr.com/polygon_mumbai',
+  wssTarget: 'wss://polygon-mumbai-bor.publicnode.com',
+};
 // for open login, modal pack options
 const settings = {
   loginSettings: {
@@ -76,7 +89,8 @@ export const Order = () => {
   const [web3Auth, setWeb3Auth] = useState(null); // web3AuthModalPack
   const [provider, setProvider] = useState(null); // web3 provider
   const [contract, setContract] = useState(null);
-  const [address, setAddress] = useState("");
+  const [wssContract, setWssContract] = useState(null);
+  const [address, setAddress] = useState('');
   const [userInfo, setUserInfo] = useState(null);
   const [tagTrigger, setTagTrigger] = useState(true); // true: wallet address, false: social email
 
@@ -85,18 +99,21 @@ export const Order = () => {
   // init web3 provider, eAAts contract
   const initWeb3 = async () => {
     try {
-      const { rpcTarget } = chainConfig;
+      const { rpcTarget, wssTarget } = chainConfig;
       const provider = new Web3(rpcTarget); // for before logging in
       const contract = new provider.eth.Contract(eAAts.abi, eAAtsAddress);
+      const wssProvider = new Web3(wssTarget);
+      const wssContract = new wssProvider.eth.Contract(eAAts.abi, eAAtsAddress);
 
       await getOrderList(provider);
 
       setProvider(provider);
       setContract(contract);
+      setWssContract(wssContract);
     } catch (e) {
-      console.error("error:initWeb3", e);
+      console.error('error:initWeb3', e);
     }
-  }
+  };
 
   const initWeb3AuthModal = async () => {
     try {
@@ -127,6 +144,61 @@ export const Order = () => {
     web3Auth.subscribe(ADAPTER_EVENTS.CONNECTED, (e) => console.log("connect", e));
     web3Auth.subscribe(ADAPTER_EVENTS.CONNECTING, (e) =>  console.log("connecting", e));
     web3Auth.subscribe(ADAPTER_EVENTS.DISCONNECTED, () => console.log("disconnect"));
+  }
+
+  try {
+    wssContract?.events
+      .OrderJoined()
+      .on('data', async event => {
+        const participants = event.returnValues.participants;
+        const joinerAddress = participants.pop();
+
+        if (participants.length !== 0) {
+          await ownerPush.channel.send([participants], {
+            notification: {
+              title: 'someone joined',
+              body: `joiner address : ${joinerAddress}`,
+            },
+          });
+        }
+      })
+      .on('error', e => {
+        console.error('event listener error1: ', e);
+      });
+
+    wssContract?.events
+      .OrderDeliveryStarted()
+      .on('data', async event => {
+        const participants = event.returnValues.participants;
+
+        await ownerPush.channel.send([participants], {
+          notification: {
+            title: 'Food picked up',
+            body: `The delivery driver picked up the food`,
+          },
+        });
+      })
+      .on('error', e => {
+        console.error('event listener error2: ', e);
+      });
+
+    wssContract?.events
+      .SingleDeliveryCompleted()
+      .on('data', async event => {
+        const participant = event.returnValues.participant;
+
+        await ownerPush.channel.send([participant], {
+          notification: {
+            title: 'Your delivery is complete',
+            body: `Take the food as quickly as possible`,
+          },
+        });
+      })
+      .on('error', e => {
+        console.error('event listener error3: ', e);
+      });
+  } catch (e) {
+    console.log('Event listener registration error: ', e);
   }
 
   const login = async () => {  
