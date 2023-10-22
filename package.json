@@ -8,6 +8,7 @@
     "@emotion/react": "^11.0.0",
     "@emotion/styled": "^11.0.0",
     "@gelatonetwork/relay-sdk": "^5.5.2",
+    "@pushprotocol/restapi": "^1.4.28",
     "@safe-global/api-kit": "^1.3.1",
     "@safe-global/auth-kit": "^1.2.1",
     "@safe-global/protocol-kit": "^1.3.0",
